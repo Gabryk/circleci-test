@@ -19,9 +19,9 @@ jobs:
       - restore_cache:
           keys:
           - v1-dependencies-
+      - run: cd mobile-app && yarn install
       - run: npm i exp
       - run: node_modules/exp login -u $EXPO_USER -p $EXPO_PASSWORD
-      - run: cd mobile-app && yarn install
       - save_cache:
           paths:
             - mobile-app/node_modules
@@ -38,7 +38,7 @@ jobs:
       - restore_cache:
           keys:
           - v1-dependencies-
-      - run: node_module/exp build:android --no-wait --no-publish --release-channel $ENVIRONMENT mobile-app/
+      - run: cd mobile-app && node_module/exp build:android --no-wait --no-publish --release-channel $ENVIRONMENT mobile-app/
 
   publish:
     <<: *defaults
@@ -49,10 +49,8 @@ jobs:
       # Download and cache dependencies
       - restore_cache:
           keys:
-          - v1-dependencies-{{ checksum "mobile-app/package.json" }}
-          # fallback to using the latest cache if no exact match is found
           - v1-dependencies-
-      - run: exp publish --release-channel $ENVIRONMENT
+      - run: cd mobile-app && node_module/exp publish --release-channel $ENVIRONMENT
 
 workflows:
   version: 2
