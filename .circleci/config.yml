@@ -9,6 +9,8 @@ defaults: &defaults
 
 dependencies:
   cache_directories:
+    - /usr/local/lib/node_modules/
+    - /usr/local/bin/
     - /home/ubuntu/nvm/versions/node/8/bin
     - /home/ubuntu/nvm/versions/node/8/lib/node_modules
 version: 2
