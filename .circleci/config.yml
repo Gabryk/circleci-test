@@ -61,7 +61,8 @@ workflows:
   version: 2
   do_it:
     jobs:
-      - init_install
+      - init_install:
+          context: org-global
       - build_android:
           requires:
             - init_install
