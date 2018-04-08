@@ -7,6 +7,10 @@ defaults: &defaults
   docker:
     - image: circleci/node:8
 
+dependencies:
+  cache_directories:
+    - /home/ubuntu/nvm/versions/node/8/bin
+    - /home/ubuntu/nvm/versions/node/8/lib/node_modules
 version: 2
 jobs:
   init_install:
