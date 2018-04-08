@@ -1,0 +1,96 @@
+# Javascript Node CircleCI 2.0 configuration file
+#
+# Check https://circleci.com/docs/2.0/language-javascript/ for more details
+#
+defaults: &defaults
+  working_directory: ~/repo
+  docker:
+    - image: circleci/node:8
+
+version: 2
+jobs:
+  init_install:
+    <<: *defaults
+
+    steps:
+      - checkout
+
+      # Download and cache dependencies
+      - restore_cache:
+          keys:
+          - v1-dependencies-{{ checksum "mobile-app/package.json" }}
+          # fallback to using the latest cache if no exact match is found
+          - v1-dependencies-
+      - run: yarn global add exp
+      - run: exp login -u $EXPO_USER -p $EXPO_PASSWORD
+      - run: cd mobile-app && yarn install
+      - save_cache:
+          paths:
+            - mobile-app/node_modules
+          key: v1-dependencies-{{ checksum "mobile-app/package.json" }}
+
+  build_android:
+    <<: *defaults
+
+    steps:
+      - checkout
+
+      # Download and cache dependencies
+      - restore_cache:
+          keys:
+          - v1-dependencies-{{ checksum "mobile-app/package.json" }}
+          # fallback to using the latest cache if no exact match is found
+          - v1-dependencies-
+      - run: exp build:android --no-wait --no-publish --release-channel $ENVIRONMENT
+
+  publish:
+    <<: *defaults
+
+    steps:
+      - checkout
+
+      # Download and cache dependencies
+      - restore_cache:
+          keys:
+          - v1-dependencies-{{ checksum "mobile-app/package.json" }}
+          # fallback to using the latest cache if no exact match is found
+          - v1-dependencies-
+      - run: exp publish --release-channel $ENVIRONMENT
+
+  deploy:
+    <<: *defaults
+    steps:
+      - checkout
+
+      - restore_cache:
+          keys:
+          - v1-dependencies-{{ checksum "functions/package.json" }}
+          - v1-dependencies-{{ checksum "package.json" }}
+          # fallback to using the latest cache if no exact match is found
+          - v1-dependencies-
+
+      - run: yarn install
+      - run: node_modules/firebase-tools/bin/firebase use prod
+      - run: yarn deploy:database
+      # - run: echo $FIREBASE_SERVICE_TOKEN_PROD | base64 --decode --ignore-garbage > ${HOME}/repo/functions/service-account.json
+      - run: node_modules/firebase-tools/bin/firebase deploy --token "$FIREBASE_TOKEN"
+
+workflows:
+  version: 2
+  do_it:
+    jobs:
+      - init_install
+      - build_android:
+          requires:
+            - init_install
+          filters:
+            tags:
+              only: /^v.*/
+            branches:
+              only: /^master$/
+      - publish:
+          requires:
+            - init_install
+          filters:
+            branches:
+              only: /^master$/
